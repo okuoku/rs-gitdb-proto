@@ -269,7 +269,73 @@ function make_reader(gitdir){
     }
 }
 
+function make_enumerator(gitdir){
+    return {
+        refs: async function(){
+            const r = await rungit(["show-ref"], gitdir, {});
+            const a = r.split("\n");
+            let out = {};
+            const m = a.forEach(e => {
+                const re = /([0-9a-f]+) (.*)/;
+                const m = e.match(re);
+                if(!m){
+                    throw "unexpected";
+                }
+                out[m[2]] = m[1];
+            });
+            return out;
+        },
+        diff: async function(a,b){
+            const re1 = /:([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+) ([CR])([0-9]*)\t([^\t]+)\t([^\t]+)/;
+            const re2 = /:([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+) (.)\t(.+)/;
+
+            const r = await rungit(["diff", "--no-abbrev", "--raw", a, b],
+                                   gitdir, {});
+            const o = r.split("\n");
+            const x = o.map(e => {
+                const m1 = e.match(re1);
+                const m2 = e.match(re2);
+                if(m1){
+                    /* Rename or Copy */
+                    const from = m1[3];
+                    const to = m1[4];
+                    const op = m1[5];
+                    const index = m1[6];
+                    const path_from = m1[7];
+                    const path_to = m1[8];
+                    return {
+                        from: from,
+                        to: to,
+                        op: op,
+                        index: index,
+                        path_orig: path_from,
+                        path: path_to
+                    };
+                }else if(m2){
+                    /* Other ops */
+                    const from = m2[3];
+                    const to = m2[4];
+                    const op = m2[5];
+                    const path = m2[6];
+                    return {
+                        from: from,
+                        to: to,
+                        op: op,
+                        path: path
+                    };
+                }else{
+                    throw "unexpected";
+                }
+            });
+            return x;
+
+        },
+        empty_commit: "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+    };
+}
+
 export default {
     make_writer: make_writer,
-    make_reader: make_reader
+    make_reader: make_reader,
+    make_enumerator: make_enumerator
 };

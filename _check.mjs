@@ -27,3 +27,9 @@ await dbg("refs/heads/master^1", "a/ccc.json");
 await dbg("refs/heads/master", "a/xccc.json");
 await dbg("refs/heads/master0", "a/xccc.json");
 await reader.dispose();
+
+const e = gitutil.make_enumerator("./check");
+
+const refs = await e.refs();
+const ops = await e.diff(e.empty_commit, refs["refs/heads/master"]);
+console.log("ops", ops);
