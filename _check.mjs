@@ -1,7 +1,7 @@
-import gitdb from "./gitdb.mjs";
+import gitutil from "./gitutil.mjs";
 import process from "node:process";
 
-const writer = gitdb.make_writer("./check", "testing");
+const writer = gitutil.make_writer("./check", "testing");
 
 await writer.init("refs/heads/master");
 await writer.set("a/bbb.json", JSON.stringify(1234));
@@ -14,7 +14,7 @@ await writer.bulkset(cmd);
 await writer.commit({msg: "Testing"});
 await writer.dispose();
 
-const reader = gitdb.make_reader("./check");
+const reader = gitutil.make_reader("./check");
 
 async function dbg(a, b){
     const obj = await reader.get(a, b);
