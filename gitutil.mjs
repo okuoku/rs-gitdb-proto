@@ -285,6 +285,11 @@ function make_enumerator(gitdir){
             });
             return out;
         },
+        history_linear: async function(a, b){
+            // Dump history a to b, excluding a, including b (first parent only)
+            const r = await rungit(["rev-list", "--first-parent", "--no-commit-header", "--format=%H", a + ".." + b], gitdir, {});
+            return r.split("\n");
+        },
         diff: async function(a,b){
             const re1 = /:([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+) ([CR])([0-9]*)\t([^\t]+)\t([^\t]+)/;
             const re2 = /:([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+) (.)\t(.+)/;

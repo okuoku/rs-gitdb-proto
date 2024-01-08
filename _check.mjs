@@ -31,5 +31,20 @@ await reader.dispose();
 const e = gitutil.make_enumerator("./check");
 
 const refs = await e.refs();
-const ops = await e.diff(e.empty_commit, refs["refs/heads/master"]);
+const head = refs["refs/heads/master"];
+const ops = await e.diff(e.empty_commit, head);
 console.log("ops", ops);
+
+const h = await e.history_linear(e.empty_commit, head);
+console.log(h);
+let prev = e.empty_commit;
+let q = [];
+while(h.length != 0){
+    let x = h.pop();
+    q.push([prev, x]);
+    prev = x;
+}
+for(const w in q){
+    const dif = await e.diff(q[w][0],q[w][1]);
+    console.log(dif);
+}
