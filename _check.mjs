@@ -6,6 +6,11 @@ const writer = gitdb.make_writer("./check", "testing");
 await writer.init("refs/heads/master");
 await writer.set("a/bbb.json", JSON.stringify(1234));
 await writer.set("a/ccc.json", JSON.stringify({mypid: process.pid}));
+const x = await writer.hash(JSON.stringify({mypid: process.pid}));
+const y = await writer.hash(JSON.stringify(4567));
+const cmd = [{path: "b/bbb.json", hash: x}, {path: "b/ddd.json", hash: y}];
+console.log("cmd", cmd);
+await writer.bulkset(cmd);
 await writer.commit({msg: "Testing"});
 await writer.dispose();
 

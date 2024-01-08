@@ -83,11 +83,13 @@ function make_writer(gitdir, index_name){
         }
     }
 
-    // Resolve index_name into an absolute path
-    if(path.isAbsolute(index_name)){
-        index_file = index_name;
-    }else{
-        index_file = process.cwd() + path.sep + index_name;
+    if(index_name){
+        // Resolve index_name into an absolute path
+        if(path.isAbsolute(index_name)){
+            index_file = index_name;
+        }else{
+            index_file = process.cwd() + path.sep + index_name;
+        }
     }
     return {
         init: async function(ref){
@@ -99,6 +101,21 @@ function make_writer(gitdir, index_name){
             await rungit(["read-tree", currentref], gitdir,
                          {GIT_INDEX_FILE: index_file});
             return true;
+        },
+        hash: async function(obj){
+            // git hash-object -w --stdin < $obj > $hash
+            const hash = await rungit_stdin(["hash-object", "-w", "--stdin"], 
+                                            gitdir, {}, obj);
+            return hash;
+        },
+        bulkset: async function(cmd){
+            // cmd = [{path: "xxx", hash: "yyy"}, ...]
+            const cvt = cmd.map((e) => 
+                                { return "10064 " + e.hash + " 0\t" + e.path + "\n"; });
+            const info = cvt.join("");
+            // git update-index --add --index-info < $info
+            await rungit_stdin(["update-index", "--add", "--index-info"],
+                               gitdir, {GIT_INDEX_FILE: index_file}, info);
         },
         set: async function(path, obj){
             // git hash-object -w --stdin < $obj > $hash
@@ -135,14 +152,16 @@ function make_writer(gitdir, index_name){
             await rungit(["update-ref", currentref, newref], gitdir, {});
         },
         dispose: async function(){
-            // rm $index_file
-            const p = new Promise((res, rej) => {
-                fs.rm(index_file, {force: false}, (err) => {
-                    // Ignore error
-                    res();
+            if(index_file){
+                // rm $index_file
+                const p = new Promise((res, rej) => {
+                    fs.rm(index_file, {force: false}, (err) => {
+                        // Ignore error
+                        res();
+                    });
                 });
-            });
-            await p;
+                await p;
+            }
             return true;
         }
     };
