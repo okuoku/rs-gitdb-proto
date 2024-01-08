@@ -3,6 +3,7 @@ import path from "node:path";
 import process from "node:process";
 import child_process from "child_process";
 import stream from "node:stream";
+import gitblob from "./gitblob.mjs";
 
 async function rungit_stdin(cmd, gitdir, env, buf){
     const myenv = {};
@@ -103,9 +104,12 @@ function make_writer(gitdir, index_name){
             return true;
         },
         hash: async function(obj){
+            /*
             // git hash-object -w --stdin < $obj > $hash
             const hash = await rungit_stdin(["hash-object", "-w", "--stdin"], 
                                             gitdir, {}, obj);
+                                            */
+            const hash = gitblob.save(gitdir, obj);
             return hash;
         },
         bulkset: async function(cmd){
