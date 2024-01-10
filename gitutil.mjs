@@ -192,7 +192,7 @@ function make_reader(gitdir){
         function consumebody(buf){
             if((bodysize + 1) == queuedsize + buf.length){
                 if(buf.length != 1){
-                    bodybuf.push(dat.subarray(0, buf.length - 1));
+                    bodybuf.push(buf.subarray(0, buf.length - 1));
                 }
                 const out = Buffer.concat(bodybuf);
                 bodybuf = [];
