@@ -48,3 +48,5 @@ for(const w in q){
     const dif = await e.diff(q[w][0],q[w][1]);
     console.log(dif);
 }
+
+console.log(await e.commit_info("HEAD"));

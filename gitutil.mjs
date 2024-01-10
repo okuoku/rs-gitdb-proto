@@ -290,6 +290,24 @@ function make_enumerator(gitdir){
             const r = await rungit(["rev-list", "--first-parent", "--no-commit-header", "--format=%H", a + ".." + b], gitdir, {});
             return r.split("\n");
         },
+        commit_info: async function(commit){
+            const r = await rungit(["show", "--format=%an%x09%ae%x09%aI%n%cn%x09%ce%x09%cI%n%B", "-s", commit], gitdir, {});
+            const re = /([^\t]*)\t([^\t]*)\t([^\t]*)\n([^\t]*)\t([^\t]*)\t([^\t]*)\n(.*)/;
+            const m = r.match(re);
+            if(! m){
+                return false;
+            }else{
+                return {
+                    name: m[1],
+                    email: m[2],
+                    date: m[3],
+                    committer_name: m[4],
+                    committer_email: m[5],
+                    committer_date: m[6],
+                    msg: m[7]
+                };
+            }
+        },
         diff: async function(a,b){
             const re1 = /:([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+) ([CR])([0-9]*)\t([^\t]+)\t([^\t]+)/;
             const re2 = /:([^ ]+) ([^ ]+) ([^ ]+) ([^ ]+) (.)\t(.+)/;
