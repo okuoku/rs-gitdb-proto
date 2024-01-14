@@ -291,8 +291,8 @@ function make_enumerator(gitdir){
             return r.split("\n");
         },
         commit_info: async function(commit){
-            const r = await rungit(["show", "--format=%an%x09%ae%x09%aI%n%cn%x09%ce%x09%cI%n%B", "-s", commit], gitdir, {});
-            const re = /([^\t]*)\t([^\t]*)\t([^\t]*)\n([^\t]*)\t([^\t]*)\t([^\t]*)\n(.*)/;
+            const r = await rungit(["show", "--format=%an%x09%ae%x09%aI%n%cn%x09%ce%x09%cI%n%T%n%B", "-s", commit], gitdir, {});
+            const re = /([^\t]*)\t([^\t]*)\t([^\t]*)\n([^\t]*)\t([^\t]*)\t([^\t]*)\n([^\n]*)\n(.*)/;
             const m = r.match(re);
             if(! m){
                 return false;
@@ -304,7 +304,8 @@ function make_enumerator(gitdir){
                     committer_name: m[4],
                     committer_email: m[5],
                     committer_date: m[6],
-                    msg: m[7]
+                    tree: m[7],
+                    msg: m[8]
                 };
             }
         },
