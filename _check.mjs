@@ -1,4 +1,5 @@
 import gitutil from "./gitutil.mjs";
+import pathutil from "./pathutil.mjs";
 import process from "node:process";
 
 const writer = gitutil.make_writer("./check", "testing");
@@ -50,3 +51,29 @@ for(const w in q){
 }
 
 console.log(await e.commit_info("HEAD"));
+
+// Manually add commit Notes
+function gen_notename(commit){
+    return pathutil.build(commit, {prefix: "", objname: ""}, 
+                          {format: "hexpath0"});
+}
+
+const notewriter_a = gitutil.make_writer("./check", "noteidx");
+const notewriter_b = gitutil.make_writer("./check", "nodeidx2");
+await notewriter_a.init("refs/notes/commits"); /* Default location */
+await notewriter_b.init("refs/notes/optional"); /* non-default location */
+
+const h2 = await e.history_linear(e.empty_commit, head);
+for(const idx in h2){
+    const commit = h2[idx];
+    const path = gen_notename(commit);
+    console.log("note path", path);
+    await notewriter_a.set(path, "(A) Note for " + commit + "\nwith some additional message");
+    await notewriter_b.set(path, "(B) alternative Note for " + commit);
+}
+
+await notewriter_a.commit({msg: "Write notes"});
+await notewriter_b.commit({msg: "Write notes"});
+
+await notewriter_a.dispose();
+await notewriter_b.dispose();
