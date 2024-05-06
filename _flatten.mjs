@@ -12,15 +12,15 @@ function prefixcfg(cfg, prefix){
 }
 
 async function step(commit, myprefix){
-    console.log("Step", commit, myprefix);
     const m = await mgr.getnode(commit, ".gitmodules");
     if(!m){
         console.log("NO GITMODULES", myprefix, commit);
+        return [];
     }else{
         console.log(m);
+        let replaces = [];
         const cfg = await mgr.genconfig(commit);
         const cfg2 = prefixcfg(cfg, myprefix);
-        console.log("CFG2", cfg2);
         await mgr.setup_config(cfg2);
         await mgr.do_fetch(cfg2);
         const paths = await mgr.getmodulepaths(commit);
@@ -33,13 +33,22 @@ async function step(commit, myprefix){
                 /* Do nothing -- .gitmodules is out of sync */
                 console.log("Node not found", commit, path);
             }else if(n.type == "commit" /* submodule */){
-                await step(n.ident, myprefix + name + "_");
+                const next0 = await step(n.ident, myprefix + name + "_");
+                const next = next0.map(e => {
+                    const nextpath = e[0];
+                    const commit = e[1];
+                    return [path + "/" + nextpath, commit];
+                });
+                const here = [[path, n.ident]].concat(next);
+                replaces = replaces.concat(here);
             }else{ /* Standard node */
                 /* Do nothing -- .gitmodules is out of sync */
                 console.log("Node is not a gitlink", commit, path);
             }
         }
+        return replaces;
     }
 }
 
-await step("HEAD", "");
+const replaces = await step("HEAD", "");
+console.log(replaces);
