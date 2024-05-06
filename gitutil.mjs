@@ -132,6 +132,22 @@ function make_writer(gitdir, index_name){
             await rungit(["update-index", "--add", "--cacheinfo",
                 ci], gitdir, {GIT_INDEX_FILE: index_file});
         },
+        unset: async function(path){
+            // git rm -f --cached --ignore-unmatch path
+            await rungit(["rm", "-f", "--cached", "--ignore-unmatch", path], 
+                         gitdir, {GIT_INDEX_FILE: index_file});
+        },
+        read_tree: async function(prefix, obj){
+            if(prefix){
+                /* NB: --prefix= requires work tree */
+                await rungit(["read-tree", "--prefix=" + prefix, obj], 
+                             gitdir, 
+                             {GIT_WORK_TREE: gitdir, GIT_INDEX_FILE: index_file});
+            }else{
+                await rungit(["read-tree", obj], 
+                             gitdir, {GIT_INDEX_FILE: index_file});
+            }
+        },
         commit: async function(opts){
             // git write-tree > $tree
             // git commit-tree $tree -p currentref -m "$opts.msg" > $newref
@@ -150,10 +166,16 @@ function make_writer(gitdir, index_name){
             const tree = await rungit(["write-tree"], gitdir, 
                 {GIT_INDEX_FILE: index_file});
 
-            const newref = await rungit(["commit-tree", tree, "-p", currentref,
-                "-m", msg], gitdir, commitopts);
-
-            await rungit(["update-ref", currentref, newref], gitdir, {});
+            if(currentref){
+                const newref = await rungit(["commit-tree", tree, "-p", currentref,
+                    "-m", msg], gitdir, commitopts);
+                await rungit(["update-ref", currentref, newref], gitdir, {});
+                return newref;
+            }else{
+                const newref = await rungit(["commit-tree", tree,
+                    "-m", msg], gitdir, commitopts);
+                return newref;
+            }
         },
         dispose: async function(){
             if(index_file){

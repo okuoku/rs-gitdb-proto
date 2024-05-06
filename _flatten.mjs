@@ -50,5 +50,29 @@ async function step(commit, myprefix){
     }
 }
 
+async function do_replace(commit, replaces){
+    const writer = gitutil.make_writer("../em2native-tests.git", "TEMP-index");
+
+    await writer.read_tree(false, commit);
+
+    for(const k in replaces){
+        const p = replaces[k];
+        /* Remove existing gitlink */
+        await writer.unset(p[0]);
+        /* Replace submodules to tree */
+        console.log("Readtree",p);
+        await writer.read_tree(p[0], p[1]);
+        /* Remove .gitmodules */
+        await writer.unset(p[0] + "/.gitmodules");
+    }
+
+    /* Remove /.gitmodules */
+    await writer.unset(".gitmodules");
+
+    const newcommit = await writer.commit({});
+    console.log(newcommit);
+}
+
 const replaces = await step("HEAD", "");
 console.log(replaces);
+await do_replace("HEAD", replaces);
