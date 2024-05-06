@@ -292,7 +292,7 @@ function make_enumerator(gitdir){
         },
         commit_info: async function(commit){
             const r = await rungit(["show", "--format=%an%x09%ae%x09%aI%n%cn%x09%ce%x09%cI%n%T%n%B", "-s", commit], gitdir, {});
-            const re = /([^\t]*)\t([^\t]*)\t([^\t]*)\n([^\t]*)\t([^\t]*)\t([^\t]*)\n([^\n]*)\n(.*)/;
+            const re = /([^\t]*)\t([^\t]*)\t([^\n]*)\n([^\t]*)\t([^\t]*)\t([^\n]*)\n([^\n]*)\n(.*)/;
             const m = r.match(re);
             if(! m){
                 return false;
