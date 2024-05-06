@@ -360,6 +360,37 @@ function make_enumerator(gitdir){
 
 function make_remotemanager(gitdir){
     return {
+        getnode: async function(commit, path){ /* => {type, ident} / #f */
+            const r = await rungit(["ls-tree", "--no-abbrev", 
+                "--format=%(objecttype) %(objectname)", 
+                commit, path], gitdir, {});
+            if(r == ""){
+                return false;
+            }else{
+                const p = r.split(" ");
+                return {
+                    type: p[0],
+                    ident: p[1]
+                }
+            }
+        },
+        getmodulepaths: async function(commit /* Must have .gitmodules */){
+            const r = await rungit(["config", "--blob", commit + ":" + 
+                ".gitmodules", "--get-regexp", "submodule.*.path"],
+            gitdir, {});
+            const o = r.split("\n");
+            const x = o.map(e => {
+                const p = e.split(" ");
+                const name = p[0].replace("submodule.","")
+                    .replace(".path","")
+                    .replaceAll("/", "_");
+                return {
+                    name: name,
+                    path: p[1]
+                };
+            });
+            return x;
+        },
         genconfig: async function(commit /* Must have .gitmodules */){
             /* FIXME: Support relative path against origin */
             const r = await rungit(["config", "--blob", commit + ":" + 
