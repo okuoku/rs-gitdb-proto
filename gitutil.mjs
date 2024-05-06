@@ -358,8 +358,48 @@ function make_enumerator(gitdir){
     };
 }
 
+function make_remotemanager(gitdir){
+    return {
+        genconfig: async function(commit /* Must have .gitmodules */){
+            /* FIXME: Support relative path against origin */
+            const r = await rungit(["config", "--blob", commit + ":" + 
+                ".gitmodules", "--get-regexp", "submodule.*.url"],
+            gitdir, {});
+            const o = r.split("\n");
+            const x = o.map(e => {
+                const p = e.split(" ");
+                const name = p[0].replace("submodule.","")
+                    .replace(".url","")
+                    .replaceAll("/", "_");
+                return {
+                    name: name,
+                    url: p[1]
+                };
+            });
+            return x;
+        },
+        setup_config: async function(cfg /* {name, url} */){
+            for(const k in cfg){
+                const c = cfg[k];
+                const cfgname = "remote." + c.name;
+                await rungit(["config", cfgname + ".url", c.url], gitdir, {});
+                await rungit(["config", cfgname + ".fetch", "+refs/heads/*:" +
+                    "refs/heads/" + c.name + "/*"], gitdir, {});
+            }
+        },
+        do_fetch: async function(cfg){
+            const params = ["fetch", "--prune", "--no-tags", "--multiple", 
+                "--jobs", "8"];
+            const args = params.concat(cfg.map(e => e.name));
+            console.log(args);
+            await rungit(args, gitdir, {});
+        }
+    }
+}
+
 export default {
     make_writer: make_writer,
     make_reader: make_reader,
-    make_enumerator: make_enumerator
+    make_enumerator: make_enumerator,
+    make_remotemanager: make_remotemanager
 };
