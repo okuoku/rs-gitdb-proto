@@ -382,6 +382,8 @@ function make_remotemanager(gitdir){
             for(const k in cfg){
                 const c = cfg[k];
                 const cfgname = "remote." + c.name;
+                await rungit(["config", cfgname + ".tagOpt", "--no-tags"], 
+                             gitdir, {});
                 await rungit(["config", cfgname + ".url", c.url], gitdir, {});
                 await rungit(["config", cfgname + ".fetch", "+refs/heads/*:" +
                     "refs/heads/" + c.name + "/*"], gitdir, {});
