@@ -71,6 +71,7 @@ async function do_replace(commit, replaces){
 
     const newcommit = await writer.commit({});
     console.log(newcommit);
+    await writer.dispose();
 }
 
 const replaces = await step("HEAD", "");
